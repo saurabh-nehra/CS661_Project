@@ -7,7 +7,7 @@ import streamlit as st
 
 #############################################################
 # Load the weather data from the CSV file
-weather_df = pd.read_csv("./data/combined.csv")
+weather_df = pd.read_csv("./combined_reduced.csv")
 
 # Take a sample of 5000 points from weather data
 sample_df = weather_df.sample(5000, random_state=101)
