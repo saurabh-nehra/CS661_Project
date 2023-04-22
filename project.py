@@ -137,6 +137,7 @@ def bar_chart(filtered_df):
 
 
 # Define a function to display an animated scatter plot of temperature vs. humidity on a separate page
+'''
 def scatter_page(sample_df, date):
     st.title("Temperature vs. Pressure by Station")
     st.write(
@@ -168,13 +169,14 @@ def scatter_page(sample_df, date):
                      )
     fig.update_layout(transition_duration=100)
     st.plotly_chart(fig)
+'''
 
 
 # Define a function to create an animated heatmap of precipitation by region
 def heatmap_page(filtered_df):
-    st.title("Precipitation Density Map by Region")
+    st.title("Precipitation Density Map")
     st.write(
-        "Here is an animated heatmap of precipitation density of selected region:")
+        "Here is an animated heatmap of precipitation density of the selected day:")
     # Create a mapbox figure with the filtered data
     fig = px.scatter_mapbox(data_frame=filtered_df,
                             lat="lat",
@@ -209,7 +211,9 @@ def exploration_page():
     # Define the widgets for user interaction
     selected_date = st.date_input(
         "Pick a date",
-        datetime.date(2019, 7, 6))
+        datetime.date(2019, 7, 6),
+        min_value=datetime.date(2000, 5, 7),
+        max_value=datetime.date(2021, 4, 30))
     if selected_date:
         st.write("You selected:", selected_date)
 
@@ -233,7 +237,7 @@ def exploration_page():
     heatmap_page(filtered_df)
     # Scatter Plot:
     selected_date = str(selected_date)
-    scatter_page(sample_df, selected_date)
+    #scatter_page(sample_df, selected_date)
 
 # create the visualization page
 
@@ -381,7 +385,9 @@ def visualization_page():
 
     selected_date = st.date_input(
         "Pick a date",
-        datetime.date(2019, 7, 6))
+        datetime.date(2019, 7, 6),
+        min_value=datetime.date(2000, 5, 7),
+        max_value=datetime.date(2021, 4, 30))
     if selected_date:
         st.write("You selected:", selected_date)
     
