@@ -137,7 +137,7 @@ def bar_chart(filtered_df):
 
 
 # Define a function to display an animated scatter plot of temperature vs. humidity on a separate page
-'''
+
 def scatter_page(sample_df, date):
     st.title("Temperature vs. Pressure by Station")
     st.write(
@@ -169,7 +169,7 @@ def scatter_page(sample_df, date):
                      )
     fig.update_layout(transition_duration=100)
     st.plotly_chart(fig)
-'''
+
 
 
 # Define a function to create an animated heatmap of precipitation by region
@@ -237,7 +237,7 @@ def exploration_page():
     heatmap_page(filtered_df)
     # Scatter Plot:
     selected_date = str(selected_date)
-    #scatter_page(sample_df, selected_date)
+    scatter_page(sample_df, selected_date)
 
 # create the visualization page
 
