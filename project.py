@@ -1,24 +1,30 @@
+# CS661A Term Project
+# Group 7
+
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import plotly.express as px
 import plotly.graph_objs as go
 import streamlit as st
 import datetime
 import webbrowser
 import folium
-from folium.plugins import MarkerCluster, Search, MeasureControl, Fullscreen
+from folium import plugins
 import seaborn as sns
+from branca.element import Template, MacroElement
+import os
+
+cwd = os.getcwd()
 
 #############################################################
 # Load the weather data from the CSV file
-weather_df = pd.read_csv("./combined_reduced.csv")
+weather_df = pd.read_csv(".cleaning/combined_reduced.csv")
 
 # Take a sample of 5000 points from weather data
-sample_df = weather_df     #.sample(5000, random_state=101)
+sample_df = weather_df  # .sample(5000, random_state=101)
 
 # Convert the 'date' column to datetime format
-#sample_df['date'] = pd.to_datetime(sample_df['date'])
+# sample_df['date'] = pd.to_datetime(sample_df['date'])
 
 # Sort the weather data by date
 sample_df = sample_df.sort_values(by=['inme', 'date'])
@@ -38,8 +44,11 @@ def home_page():
     st.title("Weather Data Dashboard :partly_sunny:")
     st.write("Welcome to the *Weather Data Dashboard*.")
     st.write("Use the sidebar to navigate through the app :sunglasses:.")
+    st.subheader("Big Data Visual Analytics (CS 661A) Term Project")
+    st.write("Group 7: Ashok Vishwakarma | Saurabh  | Onkar Dasari | Rick Ghosh")
+    st.subheader("Instructor: Soumya Dutta")
     st.markdown(
-        'The interactive website is live at https://askvish.github.io/project/brazil_map.html')
+        'The interactive website is live at https://askvish.github.io/projects/brazil_map.html')
     st.write("The dataset is looks like:")
     sample_df.columns = columns
     st.write(sample_df)
@@ -56,15 +65,16 @@ def summary_page():
     time_df["Date"] = pd.to_datetime(time_df["Date"])
 
     time_df['Year'] = time_df['Date'].dt.year
-    average_temp = time_df.groupby('Year')['Temperature(C)'].mean().reset_index()
+    average_temp = time_df.groupby(
+        'Year')['Temperature(C)'].mean().reset_index()
     average_temp = average_temp.iloc[1:-1]
-    
+
     st.title("Average temperature per year")
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=average_temp['Year'],
                   y=average_temp["Temperature(C)"], name="Temperature"))
-    
+
     fig.update_layout(xaxis_title="Year",
                       yaxis_title="Temperature (in Celsius)")
     st.plotly_chart(fig)
@@ -73,12 +83,14 @@ def summary_page():
 
     fig = go.Figure()
 
-    region_precipitation = weather_df.groupby('regi')['prcp'].mean().reset_index()
+    region_precipitation = weather_df.groupby(
+        'regi')['prcp'].mean().reset_index()
 
-    fig = go.Figure(data=[go.Bar(x=region_precipitation['regi'], y=region_precipitation['prcp'])])
+    fig = go.Figure(
+        data=[go.Bar(x=region_precipitation['regi'], y=region_precipitation['prcp'])])
 
     fig.update_layout(xaxis_title='Region',
-                  yaxis_title='Average Precipitation (mm)')
+                      yaxis_title='Average Precipitation (mm)')
     st.plotly_chart(fig)
 
     st.title("Average Temperature by Month and Region")
@@ -93,7 +105,7 @@ def summary_page():
     # Pivot the data to create a heatmap
     month_region_temp_pivot = month_region_temp.pivot(
         index='month', columns='regi', values='temp')
-    
+
     # Heatmap of average temperature by month and region
     heatmap = go.Heatmap(z=month_region_temp_pivot.values,
                          x=month_region_temp_pivot.columns,
@@ -101,14 +113,12 @@ def summary_page():
                          colorscale='RdBu', reversescale=True)
     fig = go.Figure(data=[heatmap])
     fig.update_layout(
-    title="Heatmap",
-    xaxis_title="Region",
-    yaxis_title="Month"
+        title="Heatmap",
+        xaxis_title="Region",
+        yaxis_title="Month"
     )
 
     st.plotly_chart(fig)
-
-
 
 
 # Define a function to create a line chart of temperature and humidity by date
@@ -139,37 +149,25 @@ def bar_chart(filtered_df):
 # Define a function to display an animated scatter plot of temperature vs. humidity on a separate page
 
 def scatter_page(sample_df, date):
-    st.title("Temperature vs. Pressure by Station")
+    st.title("Temperature v/s Pressure v/s Windspeed")
     st.write(
-        "Here is an animated scatter plot of temperature vs. pressure by station:")
-    
+        "Here is an animated scatter plot of Temperature v/s Pressure v/s Windspeed per region:")
+
     # Convert the datetime column to a string column
 
     sample_df['date'] = sample_df['date'].astype('str')
     sample_df = sample_df[(sample_df["date"] == date)]
     sample_df['frame'] = range(len(sample_df))
-    fig = px.scatter(data_frame=sample_df,
-                     x="regi",
-                     y="stp",
-                     animation_frame="frame",
-                     animation_group="wsnm",
-                     size="prcp",
-                     size_max=20,
-                     color="temp",
-                     hover_name="wsnm",
-                     range_x=[sample_df["temp"].min(
-                     ), sample_df["temp"].max()],
-                     range_y=[sample_df["stp"].min(
-                     ), sample_df["stp"].max()],
-                     labels={"temperature": "Temperature (Celsius)",
-                             "humidity": "Humidity (%)",
-                             "elevation": "Elevation (m)",
-                             "precipitation": "Precipitation (mm)"},
-                     title="Temperature vs. Pressure by Station (Animated)"
-                     )
-    fig.update_layout(transition_duration=100)
-    st.plotly_chart(fig)
 
+    fig = px.scatter_3d(sample_df, x="temp", y="stp", z="wdsp", color="regi")
+
+    fig.update_layout(title="Temperature v/s Pressure v/s Windspeed",
+                      scene=dict(xaxis_title="Temperature",
+                                 yaxis_title="Pressure", zaxis_title="Windspeed"),
+                      scene_camera=dict(center=dict(
+                          x=0, y=0, z=0.1), eye=dict(x=1.5, y=1.5, z=1.5)))
+
+    st.plotly_chart(fig)
 
 
 # Define a function to create an animated heatmap of precipitation by region
@@ -184,7 +182,7 @@ def heatmap_page(filtered_df):
                             size="prcp",
                             color="temp",
                             color_continuous_scale="icefire",
-                            zoom=3,
+                            zoom=2,
                             mapbox_style="carto-positron",
                             hover_name="wsnm",
                             hover_data=["regi", "temp",
@@ -228,10 +226,10 @@ def exploration_page():
     # display the filtered data
     st.write(filtered_df)
 
-
-    #html map
+    # html map
     map(filtered_df)
-    webbrowser.open('file://' + 'D:\CS661\Proj\Project\CS661_Project\\brazil_map.html', new=2)
+    webbrowser.open(
+        'file://' + cwd + '\\brazil_map.html', new=2)
 
     # Heat Map:
     heatmap_page(filtered_df)
@@ -241,42 +239,40 @@ def exploration_page():
 
 # create the visualization page
 
+
 def map(sample_df):
     # Create a map centered on Brazil
-    brazil_map = folium.Map(location=[-15.788497, -47.879873], zoom_start=4)
+    brazil_map = folium.Map(
+        location=[-15.788497, -47.879873], zoom_start=4, tiles='Open Street Map')
 
     # Create a MarkerCluster object
-    marker_cluster = MarkerCluster(name='Weather Stations')
-
+    marker_cluster = folium.plugins.MarkerCluster(name='Weather Stations')
 
     # Add markers for weather stations with pop-up information to the MarkerCluster object
     for i, row in sample_df.iterrows():
-        popup_text = f"Weather Station: {row['wsnm']} ({row['inme']})<br>Temperature: {row['temp']} &#8451;<br>Elevation: {row['elvt']} m;<br>Pressure: {row['stp']} mb;<br>Humidity: {row['hmdy']} %;<br>Wind Speed: {row['wdsp']} m/s"
+        popup_text = f"Weather Station: {row['wsnm']} ({row['inme']})<br>Region: {row['regi']} (Provision: {row['prov']})<br>Temperature: {round(row['temp'], 4)} &#8451;<br>Latitude: {row['lat']} m<br>Longitude: {row['lon']} m<br>Elevation: {row['elvt']} m<br>Pressure: {row['stp']} millibars<br>Precipitation: {row['prcp']} mm<br>Humidity: {row['hmdy']} <br>Wind Speed: {row['wdsp']} m/s<br>Wind Direction: {row['wdct']}"
         folium.Marker(location=[row['lat'], row['lon']],
-                    popup=folium.Popup(popup_text, max_width=500),
-                    icon=folium.Icon(color='red')).add_to(marker_cluster)
+                      popup=folium.Popup(popup_text, max_width=500),
+                      icon=folium.Icon(color='red')).add_to(marker_cluster)
 
     # Add the MarkerCluster object to the map
     brazil_map.add_child(marker_cluster)
-
 
     # Create a list of all weather station names
     station_names = list(set(weather_df['wsnm']))
 
     # Create a list of all weather stations
     stations = weather_df[['wsnm', 'inme', 'lat', 'lon']
-                        ].drop_duplicates().values.tolist()
+                          ].drop_duplicates().values.tolist()
 
     # Define a custom search function that filters results based on user input
-
 
     def search_func(query, item):
         # Return True if the query matches the start of the item name
         return query.lower() in item['wsnm'].lower()
 
-
     # Add a search bar to the map
-    search = Search(
+    search = folium.plugins.Search(
         layer=marker_cluster,
         geom_type='Point',
         search_data=stations,  # Add the search data
@@ -292,92 +288,210 @@ def map(sample_df):
         custom_icon=None,
         highlight=True,
         data=sample_df[['lat', 'lon', 'wsnm']],
-        position='topright').add_to(brazil_map)
+        position='topleft').add_to(brazil_map)
 
     # Add all weather station names to the search bar options
     search.options = station_names
-
-
-    # Get the highest and coldest weather stations
-    max_temp_info = sample_df.loc[sample_df['temp'].idxmax()]
-    min_temp_info = sample_df.loc[sample_df['temp'].idxmin()]
-    max_temp = round(max_temp_info['temp'], 2)
-    min_temp = round(min_temp_info['temp'], 2)
-
 
     # Create a list of locations for the HeatMap
     locations = sample_df[['lat', 'lon']].values.tolist()
 
     # Create a HeatMap object
-    heatmap = folium.plugins.HeatMap(locations, min_opacity=0.2, radius=15)
+    heatmap = folium.plugins.HeatMap(
+        data=locations, name='Weather Stations Heatmap', min_opacity=0.2, radius=15)
 
     # Add the HeatMap object to the map
     brazil_map.add_child(heatmap)
 
-    # Create a MeasureControl object
-    measure_control = MeasureControl(
-        position='topleft', primary_length_unit='kilometers', secondary_length_unit='miles')
+    # Create a list of precipitation for the HeatMap
+    prcps = sample_df[['lat', 'lon', 'prcp']].values.tolist()
+
+    # Create a list of wind speeds for the HeatMap
+    wind_speeds = sample_df[['lat', 'lon', 'wdsp']].values.tolist()
+
+    # Add the HeatMap object to the map
+    folium.plugins.HeatMap(data=wind_speeds, name='Wind Speed (m/s) Heatmap', min_opacity=0.2,
+                           radius=15, overlay=True, control=True, show=False,).add_to(brazil_map)
+
+    # Add the HeatMap object to the map
+    folium.plugins.HeatMap(data=prcps, name='Precipitation (mm) Heatmap', min_opacity=0.2,
+                           radius=15, overlay=True, control=True, show=False,).add_to(brazil_map)
+
+    # Creating Minimaps
+    minimap = plugins.MiniMap(toggle_display=True)
+    brazil_map.add_child(minimap)
+
+    # Add a scroll zoom toggler to the map
+    # plugins.ScrollZoomToggler().add_to(brazil_map)
+
+    # Add a satellite layer to the map
+    folium.raster_layers.TileLayer('Stamen Terrain').add_to(brazil_map)
+    folium.raster_layers.TileLayer('CartoDB Positron').add_to(brazil_map)
+    folium.raster_layers.TileLayer('Stamen Toner').add_to(brazil_map)
+    folium.raster_layers.TileLayer('Stamen Watercolor').add_to(brazil_map)
+    folium.raster_layers.TileLayer('CartoDB Dark_Matter').add_to(brazil_map)
 
     # Add the MeasureControl object to the map
-    brazil_map.add_child(measure_control)
+    folium.plugins.MeasureControl(position='topleft', primary_length_unit='kilometers',
+                                  secondary_length_unit='miles', primary_area_unit='sqmeters', secondary_area_unit='acres').add_to(brazil_map)
 
-    # Create a LayerControl object
-    layer_control = folium.LayerControl()
+    # Add the Fullscreen object to the map
+    folium.plugins.Fullscreen(
+        position='topleft', title='Fullscreen', title_cancel='Exit fullscreen').add_to(brazil_map)
 
-    # Add the LayerControl object to the map
-    brazil_map.add_child(layer_control)
+    # Add the Draw object
+    plugins.Draw(export=True).add_to(brazil_map)
+
+    # Add the LayerControl of the layer to the map
+    folium.LayerControl(collapsed=True).add_to(brazil_map)
+
+    # Get the highest and coldest weather stations
+    max_temp_info = sample_df.loc[sample_df['temp'].idxmax()]
+    min_temp_info = sample_df.loc[sample_df['temp'].idxmin()]
+    max_temp = max_temp_info['temp']
+    min_temp = min_temp_info['temp']
+    max_temp_ws = max_temp_info['inme']
+    min_temp_ws = min_temp_info['inme']
+    max_press_info = sample_df.loc[sample_df['stp'].idxmax()]
+    min_press_info = sample_df.loc[sample_df['stp'].idxmin()]
+    max_press = max_press_info['stp']
+    min_press = min_press_info['stp']
+    max_press_ws = max_press_info['inme']
+    min_press_ws = min_press_info['inme']
 
     # Define the HTML for the legend
     legend_html = '''
-    <div style="position: fixed; bottom: 30px; left: 30px; width: 200px; height: 160px;
+    <div style="position: fixed; bottom: 150px; left: 50px; width: 220px; height: 160px;
                 border: 2px solid grey; z-index: 9999; font-size: 12px;
                 background-color: rgba(255, 255, 255, 0.7);">
-        <h4 style="text-align:center; margin-top:15px;">Legend</h4>
-        <hr>
-        <table style="display: flex; flex-wrap: wrap; justify-content: space-evenly; padding: 5px;">
+    <h4 style="text-align:center; margin-top:10px;">Legend</h4>
+    <table style="display: flex; flex-wrap: wrap; justify-content: space-evenly; padding: 0px;">
         <tr>
-            <td>Minimum Temperature: {min_temp} &#8451;</td>
+        <td>Min. Temp: {min_temp} &#8451; at {min_temp_ws}</td>
         </tr>
         <tr>
-            <td>Maximum Temperature: {max_temp} &#8451;</td>
+        <td>Max. Temp: {max_temp} &#8451; at {max_temp_ws}</td>
         </tr>
-        </table>
+        <tr>
+        <td>Min. Pressure: {min_press} mb at {min_press_ws}</td>
+        </tr>
+        <tr>
+        <td>Max. Pressure: {max_press} mb at {max_press_ws}</td>
+        </tr>
+        <tr>
+        <td>* mb = millibars</td>
+        </tr>
+    </table>
     </div>
-    <div style="position: fixed; bottom: 30px; right: 30px; width: 200px; height: 160px;
-                border: 2px solid grey; z-index: 9999; font-size: 16px;
-                background-color: rgba(255, 255, 255, 0.7);">
-        <h4 style="text-align:center; margin-top:15px;">Markers</h4>
-        <hr>
-        <table style="display: flex; flex-wrap: wrap; justify-content: space-evenly; padding: 5px;">
-        <tr>
-            <td><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"
-                style="width:20px;height:30px;"></td>
-            <td>Weather Station</td>
-        </tr>
-        
-        <tr>
-            <td><i class="fa-solid fa-circle"></i></td>
-            <td>Station Clusters</td>
-        </tr>
-        </table>
-    </div>
-    '''.format(min_temp=min_temp, max_temp=max_temp)
+    '''.format(min_temp=min_temp, max_temp=max_temp, min_press=min_press, max_press=max_press, min_temp_ws=min_temp_ws, max_temp_ws=max_temp_ws, min_press_ws=min_press_ws, max_press_ws=max_press_ws)
 
     # Add the HTML to the map
     brazil_map.get_root().html.add_child(folium.Element(legend_html))
 
-    # Create a Fullscreen object
-    fullscreen = Fullscreen(position='topright',
-                            title='Fullscreen', title_cancel='Exit fullscreen')
+    # Define draggable legend
+    template = """
+    {% macro html(this, kwargs) %}
+    <!doctype html>
+    <html lang="en">
 
-    # Add the Fullscreen object to the map
-    brazil_map.add_child(fullscreen)
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Brazil Weather Analysis</title>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
-    # Add a satellite layer to the map
-    folium.TileLayer('Stamen Terrain').add_to(brazil_map)
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <script>
+        $(function () {
+        $("#maplegend").draggable({
+            start: function (event, ui) {
+            $(this).css({
+                right: "auto",
+                top: "auto",
+                bottom: "auto"
+            });
+            }
+        });
+        });
+
+    </script>
+    </head>
+
+    <body>
+
+    <div id='maplegend' class='maplegend' style='position: absolute; z-index:9999; border:2px solid grey; background-color:rgba(255, 255, 255, 0.8);
+        border-radius:6px; padding: 10px; font-size:14px; left: 50px; bottom: 50px;'>
+
+        <div class='legend-title'>Legend (draggable!)</div>
+        <div class='legend-scale'>
+        <ul class='legend-labels'>
+            <li><i class="fa-solid fa-location-dot fa-2xl" style="color: #ff0000;"></i></span>&nbsp;&nbsp;Weather Station
+            </li>
+            <li><i class="fa-solid fa-circle fa-xl"></i></span>&nbsp;Station Cluster</li>
+        </ul>
+        </div>
+    </div>
+
+    </body>
+
+    </html>
+
+    <style type='text/css'>
+    .maplegend .legend-title {
+        text-align: left;
+        margin-bottom: 5px;
+        font-weight: bold;
+        font-size: 90%;
+    }
+
+    .maplegend .legend-scale ul {
+        margin: 0;
+        margin-bottom: 5px;
+        padding: 0;
+        float: left;
+        list-style: none;
+    }
+
+    .maplegend .legend-scale ul li {
+        font-size: 80%;
+        list-style: none;
+        margin-left: 0;
+        line-height: 18px;
+        margin-bottom: 2px;
+    }
+
+    .maplegend ul.legend-labels li span {
+        display: block;
+        float: left;
+        height: 16px;
+        width: 30px;
+        margin-right: 5px;
+        margin-left: 0;
+        border: 1px solid #999;
+    }
+
+    .maplegend .legend-source {
+        font-size: 80%;
+        color: #777;
+        clear: both;
+    }
+
+    .maplegend a {
+        color: #777;
+    }
+    </style>
+    {% endmacro %}"""
+
+    macro = MacroElement()
+    macro._template = Template(template)
+
+    brazil_map.get_root().add_child(macro)
 
     # Save the map as an HTML file
     brazil_map.save('brazil_map.html')
+
 
 def visualization_page():
     st.title("Visualization Page")
@@ -390,7 +504,7 @@ def visualization_page():
         max_value=datetime.date(2021, 4, 30))
     if selected_date:
         st.write("You selected:", selected_date)
-    
+
     # Set the default map center and zoom level
     default_coords = (-14.23, -53.18)
 
@@ -410,7 +524,7 @@ def visualization_page():
     # Create the sidebar widgets (the filters for the interface)
     region_filter = st.sidebar.multiselect(
         "Select region(s)", regions, default=regions)
-    #date_range = st.sidebar.date_input(
+    # date_range = st.sidebar.date_input(
     #    "Select date range", value=(sample_df["date"].min(), sample_df["date"].max()))
     station_filter = st.sidebar.multiselect(
         "Select station(s)", stations, default=stations)
@@ -436,35 +550,44 @@ def visualization_page():
         center={"lat": default_coords[0], "lon": default_coords[1]},
         height=500
     )
-    fig1.update_layout(mapbox_style="open-street-map")
+    fig1.update_layout(mapbox_style="open-street-map",
+                       title="Weather Stations found after applying the filters:")
     st.plotly_chart(fig1)
 
-    st.header("Heat Map of Temperature by Region and Month")
+    st.header("Heat Map of Temperature by Region of selected date")
+    # Sort the weather data by date
+    filtered_df = filtered_df.sort_values(by=['inme', 'date'])
     # Convert the datetime column to a string column
     sample_df['date'] = sample_df['date'].astype('str')
+    # remove own index with default index
+    filtered_df.reset_index(inplace=True, drop=True)
     fig5 = px.density_mapbox(filtered1_df, lat="lat", lon="lon", z="temp", radius=10, zoom=2,
                              hover_name="inme", animation_frame=filtered_df["date"].dt.year,
-                             mapbox_style="open-street-map", opacity=0.5)
+                             color_continuous_scale="icefire", mapbox_style="open-street-map", opacity=0.5)
     st.plotly_chart(fig5)
 
     # Create a histogram of the temperature data
     fig2 = px.histogram(
         filtered1_df,
         x="temp",
-        nbins=20,
-        title="Distribution of Temperature"
+        nbins=100,
+        title="Distribution of Temperature across Brazil"
     )
     st.plotly_chart(fig2)
 
     # Define the visualizations for the interface
-    st.header("Temperature vs. Precipitation")
+    st.header("Temperature vs. Precipitation per region")
     fig3 = px.scatter(filtered1_df, x="temp", y="prcp",
                       color="regi", hover_name="inme")
+    fig3.update_layout(xaxis_title="Temperature",
+                       yaxis_title="Precipitation")
     st.plotly_chart(fig3)
 
-    st.header("Average Temperature by Region and Year")
+    st.header("Average Temperature by Region per Year")
     fig4 = px.line(filtered1_df.groupby(["regi", filtered1_df["date"].dt.year])["temp"].mean().reset_index(),
                    x="date", y="temp", color="regi", labels={"date": "Year", "temperature": "Average Temperature (C)"})
+    fig4.update_layout(xaxis_title="Temperature",
+                       yaxis_title="Average Temperature (C)")
     st.plotly_chart(fig4)
 
     # Bar Chart:
